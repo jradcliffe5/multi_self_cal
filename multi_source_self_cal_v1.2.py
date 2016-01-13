@@ -379,7 +379,7 @@ if doload == 1:
 			fitld.doconcat = 1
 			fitld.clint = 0
 			fitld.wtthresh = 0
-			fitld.outdisk = 2
+			fitld.outdisk = indisk
 			fitld.digicor = -1
 			fitld.go()
 		if file.endswith(fileend):
@@ -389,8 +389,8 @@ if doload == 1:
 
 
 	for i in range(len(uvname)):
-			uvdata = AIPSUVData(uvname[i],'SPLAT',2,1) #name the uv file in AIPS		
-			imagedata = AIPSImage(uvname[i],'IIM001',2,1)
+			uvdata = AIPSUVData(uvname[i],'SPLAT',indisk,1) #name the uv file in AIPS
+			imagedata = AIPSImage(uvname[i],'IIM001',indisk,1)
 
 			nchan = uvdata.header.naxis[2]
 			imagr = AIPSTask('IMAGR')
@@ -401,16 +401,16 @@ if doload == 1:
 			imagr.imsize[1:] = imsize
 			imagr.nboxes = 1
 			imagr.nfield = 1
-			imagr.outdisk = 2
+			imagr.outdisk = indisk
 			imagr.uvwtfn = ''
 			imagr.niter = niter
 			imagr.go()
 	
-			imagedatacl = AIPSImage(uvname[i],'ICL001',2,1)
+			imagedatacl = AIPSImage(uvname[i],'ICL001',indisk,1)
 
 			imean = AIPSTask('IMEAN')
 			imean.indata = imagedatacl
-			imean.indisk = 2
+			imean.indisk = indisk
 			imean.doprint = 1
 			imean.outtext = 'PWD:IMEAN' + uvname[i] + '.txt'
 			imean()
@@ -420,20 +420,20 @@ if doload == 1:
 			uvsub.nmaps = 1
 			uvsub.in2data = imagedatacl
 			uvsub.inver = 1
-			uvsub.outdisk = 2
+			uvsub.outdisk = indisk
 			uvsub.ncomp[1] = -1000000
 			uvsub.opcode = 'DIV'
 			uvsub.go()
 		
-			uvdata = AIPSUVData(uvname[i],'UVSUB',2,1)
+			uvdata = AIPSUVData(uvname[i],'UVSUB',indisk,1)
 			#wtmod = AIPSTask('WTMOD') #change weight relative to amplitude adjustments 
 			#wtmod.indata = uvdata
 			#wtmod.aparm[1] = (maxamplitude(uvname[i])**2)*(10**10)
-			#wtmod.outdisk = 2		
+			#wtmod.outdisk = indisk
 			#wtmod.go()
 	
 			#uvdata = AIPSUVData(uvname[i],'WTMOD',2,1)
-			uvdata2 = WizAIPSUVData(uvname[i], 'UVSUB',2,1)
+			uvdata2 = WizAIPSUVData(uvname[i], 'UVSUB',indisk,1)
 			uvdata2.header['crval'][4] = pointcenRA
 			uvdata2.header.update()
 			uvdata2.header['crval'][5] = pointcenDEC
@@ -441,21 +441,21 @@ if doload == 1:
 			uvdata.rename(name='COMBO',klass='UV', seq=0)
 	if len(uvname) > 1:
 		dbapp = AIPSTask('DBAPP')
-		uvdata = AIPSUVData('COMBO','UV',2,1)
+		uvdata = AIPSUVData('COMBO','UV',indisk,1)
 		dbapp.inname = 'COMBO'
 		dbapp.inclass = 'UV'
-		dbapp.indisk = 2
+		dbapp.indisk = indisk
 		dbapp.inseq = 2
 		dbapp.in2seq = len(uvname)
 		dbapp.outdata = uvdata
-		dbapp.outdisk = 2
+		dbapp.outdisk = indisk
 		dbapp.go()
 
 	uvsrt = AIPSTask('UVSRT')
 	uvsrt.sort = 'TB'
 	uvsrt.indata = uvdata
 	uvsrt.outdata = uvdata
-	uvsrt.outdisk = 2
+	uvsrt.outdisk = indisk
 	uvsrt.go()
 
 	uvdata.zap_table('CL',1)
@@ -468,17 +468,17 @@ if doload == 1:
 
 	multi = AIPSTask('MULTI') 
 	multi.indata = uvdata
-	multi.outdisk = 2
+	multi.outdisk = indisk
 	multi.outname = 'POINT'
 	multi.outclass = 'UVDATA'
 	multi.go()
 	
-	uvdata = AIPSUVData('POINT','UVDATA',2,1)
+	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
 
 	tabed = AIPSTask('TABED')
 	tabed.indata = uvdata
-	tabed.indisk=2 
-	tabed.outdisk=2
+	tabed.indisk=indisk
+	tabed.outdisk=indisk
 	tabed.inext = 'SU'
 	tabed.optype = 'REPL'
 	tabed.aparm[1:] = 2, 0, 0, 3, 0
@@ -487,7 +487,7 @@ if doload == 1:
 
 
 if doscal == 1:
-	uvdata = AIPSUVData('POINT','UVDATA',2,1)
+	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
 	calib = AIPSTask('CALIB')
 	clcal = AIPSTask('CLCAL')
 	snplt = AIPSTask('SNPLT')
@@ -503,12 +503,12 @@ if doscal == 1:
 			imagr.imsize[1:] = imsize
 			imagr.nboxes = 1
 			imagr.nfield = 1
-			imagr.outdisk = 2
+			imagr.outdisk = indisk
 			imagr.uvwtfn = ''
 			imagr.niter = niter
 			imagr.go()
 		calib.indata = uvdata
-		calib.outdisk = 2
+		calib.outdisk = indisk
 		calib.gainuse = i
 		if i == 1:
 			calib.docalib = 0
@@ -517,7 +517,7 @@ if doscal == 1:
 		if i == 1:
 			calib.smodel[1:] = 1, 0, 0, 0
 		if i > 1:
-			model = AIPSImage('POINT','ICL001',2,i-1)
+			model = AIPSImage('POINT','ICL001',indisk,i-1)
 			calib.in2data = model
 			calib.calsour[1] = 'POINT'
 			calib.in2disk = 2
@@ -540,7 +540,7 @@ if doscal == 1:
 		calib.go()
 
 		snplt.indata = uvdata
-		snplt.indisk = 2
+		snplt.indisk = indisk
 		snplt.inext = 'SN'
 		snplt.pixrange[1:] = -180,180
 		snplt.invers = i
@@ -568,7 +568,7 @@ if doscal == 1:
 	
 	lwpla = AIPSTask('LWPLA')
 	lwpla.indata = uvdata
-	lwpla.indisk = 2
+	lwpla.indisk = indisk
 	lwpla.plver = 1
 	if combinIFLLRR == 1:
 		lwpla.invers = int(itercal*(math.ceil((noteles*16)/9.0)))
@@ -584,19 +584,19 @@ if doscal == 1:
 
 	tasav = AIPSTask('TASAV')
 	tasav.indata = uvdata
-	tasav.indisk = 2
+	tasav.indisk = indisk
 	tasav.outname = 'MFSC_SN'
 	tasav.outclass = 'TASAV'
-	tasav.outdisk = 2
+	tasav.outdisk = indisk
 	tasav.go()
 
 	fittp = AIPSTask('FITTP')
-	fittp.indata = AIPSUVData('MFSC_SN','TASAV',2,1)
-	fittp.indisk = 2
+	fittp.indata = AIPSUVData('MFSC_SN','TASAV',indisk,1)
+	fittp.indisk = indisk
 	fittp.dataout = 'PWD:MFSC_corr_' + str(itercal) + 'iter_' +str(soli)+ 'sol.TASAV'
 	fittp.go()
 	
-	AIPSUVData('MFSC_SN','TASAV',2,1).zap()
+	AIPSUVData('MFSC_SN','TASAV',indisk,1).zap()
 	for i in range(1,itercal+1):
 		uvdata.zap_table('CL',i+1)
 		uvdata.zap_table('SN',i)
@@ -620,7 +620,7 @@ offsetRADEC = runoffsetradec(uvname[i])
 offset = radecconvert(centreRADEC[0],centreRADEC[1],offsetRADEC[0],offsetRADEC[1])
 uvfix = AIPSTask('UVFIX')
 uvfix.indata = uvdata
-uvfix.outdisk = 2
+uvfix.outdisk = indisk
 uvfix.shift[1:] = offset[0],offset[1]
 uvfix.go()
 uvdata = AIPSUVData(uvname[i],'UVFIX',2,1)
