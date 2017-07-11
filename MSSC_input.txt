@@ -1,29 +1,29 @@
 # Inputs for the multi phase centre calibration
 # The UV data for calibration needs to be in the same directory as this file and multi_source_self_cal.py
 # Usage ParselTongue multi_source_self_cal.py input.txt
-userno = 1033		# An AIPS user number with an empty catalogue! CHECK IT IS EMPTY FIRST!!
+userno = 1004		# An AIPS user number with an empty catalogue! CHECK IT IS EMPTY FIRST!!
 filenam = 10            # Number of characters in filename (Don’t change! Needs to be fixed but should work ok!)
-indisk = 2		# AIPS disk to use
+indisk = 1		# AIPS disk to use
 msgkill = 0		# How chatty dya want AIPS to be, -5 is quiet 5 is loud
 
 point_cen_RA = -170.791333333   #RA pointing centre of observations in decimal degrees
 point_cen_DEC = 62.216111111    #DEC pointing centre
-ref_ant = 1                     #reference antenna used in phase referencing
-solution_interval = 6          #self cal solution interval
+ref_ant = 3                     #reference antenna used in phase referencing
+solution_interval = 2           #self cal solution interval
 combineIFLLRR = 4               # 1 for no combination, 2 to combine IF, 3 to combine pols, 4 to combine all
-amplitude_or_phase = 'P'        # 'P' for phase only calibration (Combined SNR<200), A&P for gain and phase 
+amplitude_or_phase = 'P'        # 'P' for phase only calibration (Combined SNR<200), A&P for gain and phase
 
-imsize = 512                    #Image size in pixels. Recommended to be >=512 e.g. 1024 or 2048
-self_cal_iter = 3               #Number of self_cal iterations
+imsize = 1024                   #Image size in pixels. Recommended to be >=512 e.g. 1024 or 2048
+self_cal_iter = 5               #Number of self_cal iterations
 file_start = 'HDF'		#Beginning of the UV data files (should be the same for all data)
 file_end = '.UV'                #End of the UV data files(should be same for all UV data
-niter = 70                      #Clean iterations
-noteles = 10                    #Number of telescopes
+niter = 250                     #Clean iterations
+noteles = 12                    #Number of telescopes
 
 # Mode options
-doload = 1                      #Load the data and create single 1Jy data set ready for self-cal
+doload = 0                      #Load the data and create single 1Jy data set ready for self-cal
 doscal = 1                      #Do the self cal iterations
+dbcon_choice = 1
 
-#Need to run this with doload =1 first and doscal = 1. If the SN tables are not good and parameters need to be changed change doload = 0 
+#Need to run this with doload =1 first and doscal = 1. If the SN tables are not good and parameters need to be changed change doload = 0
 # so the set need not be loaded again! (this takes ages)
-
