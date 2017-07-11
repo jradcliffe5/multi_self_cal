@@ -70,13 +70,13 @@ def parse_inp(filename):
 			control[param] = valuelist
 
 	return control
-	
+
 
 
 def checkin(control):
 	''' convert the control hash to a list of global variables '''
 
-	global userno, indisk, fitsdir, fitsfil, toload, plotdir, fittpdir, msgkill
+	global userno, indisk, fitsdir, fitsfil, toload, plotdir, fittpdir, msgkill, dbcon_choice
 	global aggr1, max1, aggr2, max2, rho, ncpu, kickoutsigma, filestart, refan, soli, combinIFLLRR, noteles
 	global doflag, doimag, imsize, filenam, niter, itercal, fileend, pointcenRA, pointcenDEC, doscal, doload, APhas
 	AIPS.userno = int(control.get('userno',[0])[0])
@@ -85,6 +85,7 @@ def checkin(control):
 	doscal = int(control.get('doscal',[1])[0])
 	indisk = int(control.get('indisk', [0])[0])
 	ncpu = float(control.get('ncpu',[8])[0])
+	dbcon_choice = int(control.get('dbcon_choice',[1])[0])
 	kickoutsigma = float(control.get('kickoutsigma',[1.5])[0])
 	doflag = int(control.get('doflag',[1])[0])
 	doimag = int(control.get('doimag',[1])[0])
@@ -127,7 +128,7 @@ def checkin(control):
 	if (not os.access(fittpdir, os.W_OK) ):
 		print "Error:", fittpdir, "is not writable by you. Check your inputs."
 
-	
+
 	msgkill = int(control.get('msgkill', [-5])[0])
 
 	if (not AIPS.userno) or (not indisk):
@@ -178,7 +179,7 @@ def degreeradecconvert(RA,Dec): # converts degrees ra dec to hh:mm:ss.ss & dd:mm
 
         if degRA > 360:
                 print `degRA`+": inputs may not exceed 360!\n"
-     
+
 
         hh=int(degRA/15)
 	mm=int((degRA-15*hh)*4)
@@ -241,32 +242,32 @@ def radecconvert(a,b,c,d):
         print" form hh:mm:ss(.ssssssss) or hh mm ss(.ssssssss)"
         print" (Don't mix!).\n"
         sys.exit()
-    
+
     # Find and replace any ":" and "=" from inputs
     newinp=[]
     for x in inp:
         newinp.append(string.replace(x, ":", " "))
-    
+
     inp=newinp
-    
+
     # Find and delete alphanumeric entries like "RA" and "DEC"
     newline=""
     for x in inp:
         newline=newline+" "
         for y in x:
             newline=newline+y
-    
+
     inp=string.split(newline)
-    
+
     newinp=[]
     for x in inp:
         try:
             newinp.append(float(x))
         except ValueError:
             pass
-    
+
     inp=newinp
-    
+
     if len(inp)==4:
         ra1 =string.split(inp[0], ":")
         dec1=string.split(inp[1], ":")
@@ -280,76 +281,151 @@ def radecconvert(a,b,c,d):
     else:
         print" Too few or too many parameters."
         sys.exit()
-    
+
     # Calculate angular separation of declinations
     # Convert them into degrees and calulate the difference
-    
+
     # conversion of right ascension 1:
     ra1hh=(float(ra1[0]))*15
     ra1mm=(float(ra1[1])/60)*15
     ra1ss=(float(ra1[2])/3600)*15
-    
+
     ra1deg=ra1hh+ra1mm+ra1ss
     ra1rad=ra1deg*math.pi/180
-    
+
     # conversion of declination 1:
     dec1hh=abs(float(dec1[0]))
     dec1mm=float(dec1[1])/60
     dec1ss=float(dec1[2])/3600
-    
+
     if float(dec1[0]) < 0:
     	dec1deg=-1*(dec1hh+dec1mm+dec1ss)
     else:
     	dec1deg=dec1hh+dec1mm+dec1ss
-    
+
     dec1rad=dec1deg*math.pi/180
-    
+
     # conversion of right ascension 2:
     ra2hh=float(ra2[0])*15
     ra2mm=(float(ra2[1])/60)*15
     ra2ss=(float(ra2[2])/3600)*15
-    
+
     ra2deg=ra2hh+ra2mm+ra2ss
     ra2rad=ra2deg*math.pi/180
-    
+
     # conversion of declination 2:
     dec2hh=abs(float(dec2[0]))
     dec2mm=float(dec2[1])/60
     dec2ss=float(dec2[2])/3600
-    
+
     if float(dec2[0]) < 0:
     	dec2deg=-1*(dec2hh+dec2mm+dec2ss)
     else:
     	dec2deg=dec2hh+dec2mm+dec2ss
-    
+
     dec2rad=dec2deg*math.pi/180
-    
+
     # Delta RA
     deg  = ((ra2rad-ra1rad)*180/math.pi)
     deg_corrected=math.cos(dec1rad)*deg
     hh   =int(deg/15)
     mm   =int((deg-15*hh)*4)
     ss   =(4*deg-60*hh-mm)*60
-    
+
     hh   =int(deg)
     mm   =int((deg-int(deg))*60)
     ss   =((deg-int(deg))*60-mm)*60
-    
+
     # Delta RA corrected for declination (dms format)
     deg_corrected=math.cos(dec1rad)*deg
     hh   =int(deg_corrected)
     mm   =int((deg_corrected-int(deg_corrected))*60)
     ss   =((deg_corrected-int(deg_corrected))*60-mm)*60
     deltara = hh*3600 + mm*60 + ss
-    
+
     # Delta DEC
     deg = ((dec1rad-dec2rad)*180/math.pi)
     hh   =int(deg)
     mm   =int((deg-int(deg))*60)
     ss   =((deg-int(deg))*60-mm)*60
     deltadec = hh*3600 + mm*60 + ss
-    
+
     return [deltara, deltadec]
+
+def dbcon_combine(disk):
+	tasav = AIPSTask('TASAV')
+	uvavg = AIPSTask('UVAVG')
+	avspc = AIPSTask('AVSPC')
+	dbcon = AIPSTask('DBCON')
+	msort = AIPSTask('MSORT')
+	indxr = AIPSTask('INDXR')
+	split = AIPSTask('SPLIT')
+	splat = AIPSTask('SPLAT')
+	uvcop = AIPSTask('UVCOP')
+	pca = AIPSCat(indisk)
+	print "Your AIPS catalog looks like this:"
+	print AIPSCat(indisk)
+	print ".... DBCONing....."
+
+	pca = AIPSCat(indisk)
+	i = 0
+	queueNAME = deque([])
+	queueKLAS = deque([])
+	queueSEQ  = deque([])
+	for fitsfil in pca[indisk]:
+		if pca[indisk][i]["klass"] == 'UV' :
+			queueNAME.append(pca[indisk][i]["name"])
+			queueKLAS.append(pca[indisk][i]["klass"])
+			queueSEQ.append(pca[indisk][i]["seq"])
+		i = i + 1
+
+
+
+	i = 0
+	while len(queueNAME)>1 :
+		print "Combining " + queueNAME[0] + '.' + queueKLAS[0] + '.' + format(queueSEQ[0]) + " and " + queueNAME[1] + '.' + queueKLAS[1] + '.' + format(queueSEQ[1])
+		uvdata1 = AIPSUVData(queueNAME.popleft(), queueKLAS.popleft(), indisk, queueSEQ.popleft())
+		uvdata2 = AIPSUVData(queueNAME.popleft(), queueKLAS.popleft(), indisk, queueSEQ.popleft())
+		dbcon.indata = uvdata1
+		dbcon.in2data = uvdata2
+		dbcon.outname = format(i)
+		dbcon.outclass = 'DBCON'
+		dbcon.outdisk = disk
+		dbcon.doarray = 1
+		dbcon.fqcenter = -1
+		dbcon.go()
+
+		indxr.indata = AIPSUVData(dbcon.outname, dbcon.outclass, indisk, dbcon.outseq)
+		indxr.go()
+
+		queueNAME.append(format(i))
+		queueKLAS.append('DBCON')
+		queueSEQ.append(1)
+
+		i = i + 1
+	print "Final sort and index...."
+	data = AIPSUVData(queueNAME[0], queueKLAS[0], indisk, queueSEQ[0])
+	msort.indata = data
+	msort.outdata = data
+	msort.go()
+	indxr.indata = data
+	indxr.go()
+	data.rename('COMBO','DBCON',0)
+	print "Tidying up your AIPS catalogue."
+
+	pca = AIPSCat(indisk)
+	j = 0
+	for fitsfil in pca[indisk]:
+		if pca[indisk][j]["klass"] == 'FGED' :
+			print "Zapping: " + pca[indisk][j]["name"] + '.' + pca[indisk][j]["klass"] + '.' + format(pca[indisk][j]["seq"])
+			uvdata1 = AIPSUVData(pca[indisk][j]["name"], pca[indisk][j]["klass"], indisk, pca[indisk][j]["seq"])
+			uvdata1.zap()
+		if pca[indisk][j]["klass"] == 'DBCON' :
+			if pca[indisk][j]["name"].isdigit() :
+				print "Zapping: " + pca[indisk][j]["name"] + '.' + pca[indisk][j]["klass"] + '.' + format(pca[indisk][j]["seq"])
+				uvdata1 = AIPSUVData(pca[indisk][j]["name"], pca[indisk][j]["klass"], indisk, pca[indisk][j]["seq"])
+				uvdata1.zap()
+		j = j + 1
 
 
 checkin(control)
@@ -370,11 +446,11 @@ if doload == 1:
 	uvname = [] #HDF names of files
 
 	for file in listdir('./'):
-		if file.startswith(filestart): 
+		if file.startswith(filestart):
 			uvdataname = str(file) #Load the UV data file & image
 			#uvdataname = uvdataname[:-1]
 			fitld = AIPSTask('FITLD')
-			fitld.datain = ('PWD:' + uvdataname) 
+			fitld.datain = ('PWD:' + uvdataname)
 			fitld.ncount = 1
 			fitld.doconcat = 1
 			fitld.clint = 0
@@ -399,13 +475,13 @@ if doload == 1:
 			imagr.outname = uvdata.name
 			imagr.cellsize[1:] = findmaxb(uvdata)
 			imagr.imsize[1:] = imsize
+			imagr.uvwtfn='NA'
 			imagr.nboxes = 1
 			imagr.nfield = 1
 			imagr.outdisk = indisk
-			imagr.uvwtfn = ''
 			imagr.niter = niter
 			imagr.go()
-	
+
 			imagedatacl = AIPSImage(uvname[i],'ICL001',indisk,1)
 
 			imean = AIPSTask('IMEAN')
@@ -414,7 +490,7 @@ if doload == 1:
 			imean.doprint = 1
 			imean.outtext = 'PWD:IMEAN' + uvname[i] + '.txt'
 			imean()
-		
+
 			uvsub = AIPSTask('UVSUB') #Divide visibilites by clean model!
 			uvsub.indata = uvdata
 			uvsub.nmaps = 1
@@ -424,14 +500,14 @@ if doload == 1:
 			uvsub.ncomp[1] = -1000000
 			uvsub.opcode = 'DIV'
 			uvsub.go()
-		
+
 			uvdata = AIPSUVData(uvname[i],'UVSUB',indisk,1)
-			#wtmod = AIPSTask('WTMOD') #change weight relative to amplitude adjustments 
+			#wtmod = AIPSTask('WTMOD') #change weight relative to amplitude adjustments
 			#wtmod.indata = uvdata
 			#wtmod.aparm[1] = (maxamplitude(uvname[i])**2)*(10**10)
 			#wtmod.outdisk = indisk
 			#wtmod.go()
-	
+
 			#uvdata = AIPSUVData(uvname[i],'WTMOD',2,1)
 			uvdata2 = WizAIPSUVData(uvname[i], 'UVSUB',indisk,1)
 			uvdata2.header['crval'][4] = pointcenRA
@@ -439,7 +515,7 @@ if doload == 1:
 			uvdata2.header['crval'][5] = pointcenDEC
 			uvdata2.header.update()
 			uvdata.rename(name='COMBO',klass='UV', seq=0)
-	if len(uvname) > 1:
+	if len(uvname) > 1 and dbcon_choice == 0:
 		dbapp = AIPSTask('DBAPP')
 		uvdata = AIPSUVData('COMBO','UV',indisk,1)
 		dbapp.inname = 'COMBO'
@@ -450,6 +526,10 @@ if doload == 1:
 		dbapp.outdata = uvdata
 		dbapp.outdisk = indisk
 		dbapp.go()
+		uvdata.rename('COMBO','DBCON',1,1)
+	else:
+		dbcon_combine(indisk)
+		uvdata = WizAIPSUVData('COMBO','DBCON',1,1)
 
 	uvsrt = AIPSTask('UVSRT')
 	uvsrt.sort = 'TB'
@@ -466,13 +546,13 @@ if doload == 1:
 	indxr.cparm[3] = 0.25
 	indxr.go()
 
-	multi = AIPSTask('MULTI') 
+	multi = AIPSTask('MULTI')
 	multi.indata = uvdata
 	multi.outdisk = indisk
 	multi.outname = 'POINT'
 	multi.outclass = 'UVDATA'
 	multi.go()
-	
+
 	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
 
 	tabed = AIPSTask('TABED')
@@ -502,9 +582,10 @@ if doscal == 1:
 			imagr.cellsize[1:] = findmaxb(uvdata)
 			imagr.imsize[1:] = imsize
 			imagr.nboxes = 1
+			imagr.docalib = 2
 			imagr.nfield = 1
 			imagr.outdisk = indisk
-			imagr.uvwtfn = ''
+			imagr.uvwtfn = 'NA'
 			imagr.niter = niter
 			imagr.go()
 		calib.indata = uvdata
@@ -520,8 +601,7 @@ if doscal == 1:
 			model = AIPSImage('POINT','ICL001',indisk,i-1)
 			calib.in2data = model
 			calib.calsour[1] = 'POINT'
-			calib.in2disk = 2
-			calib.nmaps
+			calib.in2disk = indisk
 			calib.ncomp[1] = -1000000
 			calib.nmaps = 1
 		calib.refant = refan
@@ -565,7 +645,7 @@ if doscal == 1:
 		clcal.gainuse = i+1
 		clcal.refant = refan
 		clcal.go()
-	
+
 	lwpla = AIPSTask('LWPLA')
 	lwpla.indata = uvdata
 	lwpla.indisk = indisk
@@ -595,7 +675,7 @@ if doscal == 1:
 	fittp.indisk = indisk
 	fittp.dataout = 'PWD:MFSC_corr_' + str(itercal) + 'iter_' +str(soli)+ 'sol.TASAV'
 	fittp.go()
-	
+
 	AIPSUVData('MFSC_SN','TASAV',indisk,1).zap()
 	for i in range(1,itercal+1):
 		uvdata.zap_table('CL',i+1)
@@ -612,7 +692,7 @@ if doscal == 1:
 	if combinIFLLRR == 4:
 		for i in range(1,int(itercal*(math.ceil(noteles/9.0)))+1):
 			uvdata.zap_table('PL',i)
-	
+
 ''' # Nugget of gold to shift offsetts to field centres...
 uvdata = AIPSUVData(uvname[i],'WTMOD',2,1) #shift data to centre.
 centreRADEC = degreeradecconvert(uvdata.header['crval'][4],uvdata.header['crval'][5])
@@ -625,5 +705,4 @@ uvfix.shift[1:] = offset[0],offset[1]
 uvfix.go()
 uvdata = AIPSUVData(uvname[i],'UVFIX',2,1)
 print offset, ofsetRADEC, centreRADEC
-'''	
-		
+'''
