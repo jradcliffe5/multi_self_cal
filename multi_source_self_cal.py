@@ -75,14 +75,24 @@ use_DBAPP = str(inputs['use_DBAPP'])
 UV_path = str(inputs['UV_path'])
 UV_files = str(inputs['UV_files'])
 UV_suffix = str(inputs['UV_suffix'])
+apply_pbcor = str(inputs['apply_pbcor'])  ## To be used in conjunction with run_pbcor (EVN only)
+pbcor_path = str(inputs['pbcor_path'])     ## path to tasav files for PBCOR (EVN only)
+do_calib = str(inputs['do_calib'])     ## Apply calibration & split data
 ## AIPS specific
 AIPS.userno = int(inputs['AIPS_userno'])
 indisk = int(inputs['AIPS_indisk'])
 AIPSTask.msgkill = int(inputs['AIPS_msgkill'])
 
+### MSSC Setup
+noteles = int(inputs['noteles'])                  #Number of telescopes
+refant = int(inputs['reference_antenna']) #reference antenna used in phase referencing
+### UV stacking
+imsize = int(inputs['imsize'])   #Image size in pixels.
+print imsize
+niter = int(inputs['niter'])                    #Clean iterations
+
+
 pointcenRA, pointcenDEC = str(inputs['pointing_centre']).split(',')
-
-
 
 
 AIPSCat().zap()
@@ -115,6 +125,10 @@ if do_load == 'True':
 		fitld.go()
 
 		uvdata = AIPSUVData('A%s' % i,'LOAD',indisk,1)
+
+		if do_calib == 'True':
+			splat = AIPSTask('')
+
 		#imagedata = AIPSImage(uvname[i],'IIM001',indisk,1)
 
 		nchan = uvdata.header.naxis[2]
@@ -123,7 +137,7 @@ if do_load == 'True':
 		imagr.indata = uvdata
 		imagr.outname = uvdata.name
 		imagr.cellsize[1:] = findmaxb(uvdata)
-		imagr.imsize[1:] = imsize
+		imagr.imsize[1:] = imsize,imsize
 		imagr.uvwtfn='NA'
 		imagr.nboxes = 1
 		imagr.nfield = 1
@@ -157,23 +171,24 @@ if do_load == 'True':
 		uvdata.header.update()
 		uvdata.rename(name='COMBO',klass='UV', seq=0)
 
-		if use_DBAPP == 'True':
-			dbapp = AIPSTask('DBAPP')
-			uvdata = WizAIPSUVData('COMBO','UV',indisk,1)
-			dbapp.inname = 'COMBO'
-			dbapp.inclass = 'UV'
-			dbapp.indisk = indisk
-			dbapp.inseq = 2
-			dbapp.in2seq = len(uvname)
-			dbapp.outdata = uvdata
-			dbapp.outdisk = indisk
-			dbapp.go()
-			uvdata.rename('COMBO','DBCON',1,1)
-		elif use_DBAPP == 'False':
-			dbcon_combine(indisk)
-			uvdata = WizAIPSUVData('COMBO','DBCON',1,1)
-		else:
-			print ''
+		os.system('rm %s' % UV_files[i])
+	if use_DBAPP == 'True':
+		dbapp = AIPSTask('DBAPP')
+		uvdata = WizAIPSUVData('COMBO','UV',indisk,1)
+		dbapp.inname = 'COMBO'
+		dbapp.inclass = 'UV'
+		dbapp.indisk = indisk
+		dbapp.inseq = 2
+		dbapp.in2seq = len(uvname)
+		dbapp.outdata = uvdata
+		dbapp.outdisk = indisk
+		dbapp.go()
+		uvdata.rename('COMBO','DBCON',1,1)
+	elif use_DBAPP == 'False':
+		dbcon_combine(indisk)
+		uvdata = WizAIPSUVData('COMBO','DBCON',1,1)
+	else:
+		print ''
 
 	uvsrt = AIPSTask('UVSRT')
 	uvsrt.sort = 'TB'
@@ -223,7 +238,7 @@ if do_self_cal == 'True':
 			imagr.sources[1] = 'POINT'
 			imagr.outname = 'POINT'
 			imagr.cellsize[1:] = findmaxb(uvdata)
-			imagr.imsize[1:] = imsize
+			imagr.imsize[1:] = imsize, imsize
 			imagr.nboxes = 1
 			imagr.docalib = 2
 			imagr.nfield = 1
@@ -308,18 +323,18 @@ if do_self_cal == 'True':
 	tasav = AIPSTask('TASAV')
 	tasav.indata = uvdata
 	tasav.indisk = indisk
-	tasav.outname = 'MFSC_SN'
+	tasav.outname = 'MSSC_SN'
 	tasav.outclass = 'TASAV'
 	tasav.outdisk = indisk
 	tasav.go()
 
 	fittp = AIPSTask('FITTP')
-	fittp.indata = AIPSUVData('MFSC_SN','TASAV',indisk,1)
+	fittp.indata = AIPSUVData('MSSC_SN','TASAV',indisk,1)
 	fittp.indisk = indisk
-	fittp.dataout = 'PWD:MFSC_corr_' + str(itercal) + 'iter_' +str(soli)+ 'sol.TASAV'
+	fittp.dataout = 'PWD:MSSC_corr_' + str(itercal) + 'iter_' +str(soli)+ 'sol.TASAV'
 	fittp.go()
 
-	AIPSUVData('MFSC_SN','TASAV',indisk,1).zap()
+	AIPSUVData('MSSC_SN','TASAV',indisk,1).zap()
 	for i in range(1,itercal+1):
 		uvdata.zap_table('CL',i+1)
 		uvdata.zap_table('SN',i)
@@ -335,246 +350,3 @@ if do_self_cal == 'True':
 	if combinIFLLRR == 4:
 		for i in range(1,int(itercal*(math.ceil(noteles/9.0)))+1):
 			uvdata.zap_table('PL',i)
-'''
-	for i in range(len(uvname)):
-			uvdata = AIPSUVData(uvname[i],'SPLAT',indisk,1) #name the uv file in AIPS
-			imagedata = AIPSImage(uvname[i],'IIM001',indisk,1)
-
-			nchan = uvdata.header.naxis[2]
-			imagr = AIPSTask('IMAGR')
-			imagr.nchav = nchan #use imagr to get a clean model!
-			imagr.indata = uvdata
-			imagr.outname = uvdata.name
-			imagr.cellsize[1:] = findmaxb(uvdata)
-			imagr.imsize[1:] = imsize
-			imagr.uvwtfn='NA'
-			imagr.nboxes = 1
-			imagr.nfield = 1
-			imagr.outdisk = indisk
-			imagr.niter = niter
-			imagr.go()
-
-			imagedatacl = AIPSImage(uvname[i],'ICL001',indisk,1)
-
-			imean = AIPSTask('IMEAN')
-			imean.indata = imagedatacl
-			imean.indisk = indisk
-			imean.doprint = 1
-			imean.outtext = 'PWD:IMEAN' + uvname[i] + '.txt'
-			imean()
-
-			uvsub = AIPSTask('UVSUB') #Divide visibilites by clean model!
-			uvsub.indata = uvdata
-			uvsub.nmaps = 1
-			uvsub.in2data = imagedatacl
-			uvsub.inver = 1
-			uvsub.outdisk = indisk
-			uvsub.ncomp[1] = -1000000
-			uvsub.opcode = 'DIV'
-			uvsub.go()
-
-			uvdata = AIPSUVData(uvname[i],'UVSUB',indisk,1)
-			#wtmod = AIPSTask('WTMOD') #change weight relative to amplitude adjustments
-			#wtmod.indata = uvdata
-			#wtmod.aparm[1] = (maxamplitude(uvname[i])**2)*(10**10)
-			#wtmod.outdisk = indisk
-			#wtmod.go()
-
-			#uvdata = AIPSUVData(uvname[i],'WTMOD',2,1)
-			uvdata2 = WizAIPSUVData(uvname[i], 'UVSUB',indisk,1)
-			uvdata2.header['crval'][4] = pointcenRA
-			uvdata2.header.update()
-			uvdata2.header['crval'][5] = pointcenDEC
-			uvdata2.header.update()
-			uvdata.rename(name='COMBO',klass='UV', seq=0)
-	if len(uvname) > 1 and dbcon_choice == 0:
-		dbapp = AIPSTask('DBAPP')
-		uvdata = AIPSUVData('COMBO','UV',indisk,1)
-		dbapp.inname = 'COMBO'
-		dbapp.inclass = 'UV'
-		dbapp.indisk = indisk
-		dbapp.inseq = 2
-		dbapp.in2seq = len(uvname)
-		dbapp.outdata = uvdata
-		dbapp.outdisk = indisk
-		dbapp.go()
-		uvdata.rename('COMBO','DBCON',1,1)
-	else:
-		dbcon_combine(indisk)
-		uvdata = WizAIPSUVData('COMBO','DBCON',1,1)
-
-	uvsrt = AIPSTask('UVSRT')
-	uvsrt.sort = 'TB'
-	uvsrt.indata = uvdata
-	uvsrt.outdata = uvdata
-	uvsrt.outdisk = indisk
-	uvsrt.go()
-
-	uvdata.zap_table('CL',1)
-	indxr = AIPSTask('INDXR')
-	indxr.indata = uvdata
-	indxr.cparm[1]=360
-	indxr.cparm[2] = 360
-	indxr.cparm[3] = 0.25
-	indxr.go()
-
-	multi = AIPSTask('MULTI')
-	multi.indata = uvdata
-	multi.outdisk = indisk
-	multi.outname = 'POINT'
-	multi.outclass = 'UVDATA'
-	multi.go()
-
-	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
-
-	tabed = AIPSTask('TABED')
-	tabed.indata = uvdata
-	tabed.indisk=indisk
-	tabed.outdisk=indisk
-	tabed.inext = 'SU'
-	tabed.optype = 'REPL'
-	tabed.aparm[1:] = 2, 0, 0, 3, 0
-	tabed.keystrng = 'POINT'
-	tabed.go()
-
-
-if doscal == 1:
-	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
-	calib = AIPSTask('CALIB')
-	clcal = AIPSTask('CLCAL')
-	snplt = AIPSTask('SNPLT')
-	for i in range(1,itercal+1):
-		if i >1:
-			nchan = uvdata.header.naxis[2]
-			imagr = AIPSTask('IMAGR')
-			imagr.nchav = nchan #use imagr to get a clean model!
-			imagr.indata = uvdata
-			imagr.sources[1] = 'POINT'
-			imagr.outname = 'POINT'
-			imagr.cellsize[1:] = findmaxb(uvdata)
-			imagr.imsize[1:] = imsize
-			imagr.nboxes = 1
-			imagr.docalib = 2
-			imagr.nfield = 1
-			imagr.outdisk = indisk
-			imagr.uvwtfn = 'NA'
-			imagr.niter = niter
-			imagr.go()
-		calib.indata = uvdata
-		calib.outdisk = indisk
-		calib.gainuse = i
-		if i == 1:
-			calib.docalib = 0
-		if i>1:
-			calib.docalib = 2
-		if i == 1:
-			calib.smodel[1:] = 1, 0, 0, 0
-		if i > 1:
-			model = AIPSImage('POINT','ICL001',indisk,i-1)
-			calib.in2data = model
-			calib.calsour[1] = 'POINT'
-			calib.in2disk = indisk
-			calib.ncomp[1] = -1000000
-			calib.nmaps = 1
-		calib.refant = refan
-		calib.solint = soli
-		if combinIFLLRR == 1:
-			calib.aparm[1:] = 3, 0, 0, 0, 0, 0, 0, 0
-		if combinIFLLRR == 2:
-			calib.aparm[1:] = 3, 0, 0, 0, 1, 0, 0, 0
-		if combinIFLLRR == 3:
-			calib.aparm[1:] = 3, 0, 1, 0, 0, 0, 0, 0
-		if combinIFLLRR == 4:
-			calib.aparm[1:] = 3, 0, 1, 0, 1, 0, 0, 0
-		calib.soltype = 'L1'
-		calib.solmode = APhas
-		calib.snver = i
-		calib.go()
-
-		snplt.indata = uvdata
-		snplt.indisk = indisk
-		snplt.inext = 'SN'
-		snplt.pixrange[1:] = -180,180
-		snplt.invers = i
-		snplt.nplots = 9
-		snplt.optype = 'PHAS'
-		if combinIFLLRR == 1:
-			snplt.opcode = ''
-		if combinIFLLRR == 2:
-			snplt.opcode = 'ALIF'
-		if combinIFLLRR == 3:
-			snplt.opcode = 'ALST'
-		if combinIFLLRR == 4:
-			snplt.opcode = 'ALSI'
-		snplt.dotv = -1
-		snplt.go()
-
-		clcal.indata = uvdata
-		clcal.interpol = 'AMBG'
-		clcal.snver = i
-		clcal.invers = i
-		clcal.gainver = i
-		clcal.gainuse = i+1
-		clcal.refant = refan
-		clcal.go()
-
-	lwpla = AIPSTask('LWPLA')
-	lwpla.indata = uvdata
-	lwpla.indisk = indisk
-	lwpla.plver = 1
-	if combinIFLLRR == 1:
-		lwpla.invers = int(itercal*(math.ceil((noteles*16)/9.0)))
-	if combinIFLLRR == 2:
-		lwpla.invers = int(itercal*(math.ceil((noteles*2)/9.0)))
-	if combinIFLLRR == 3:
-		lwpla.invers = int(itercal*(math.ceil((noteles*8)/9.0)))
-	if combinIFLLRR == 4:
-		lwpla.invers = int(itercal*(math.ceil(noteles/9.0)))
-	lwpla.lpen = 1
-	lwpla.outfile = 'PWD:Sol_tabl_' + str(itercal) + 'iter_' +str(soli)+ 'sol.ps'
-	lwpla.go()
-
-	tasav = AIPSTask('TASAV')
-	tasav.indata = uvdata
-	tasav.indisk = indisk
-	tasav.outname = 'MFSC_SN'
-	tasav.outclass = 'TASAV'
-	tasav.outdisk = indisk
-	tasav.go()
-
-	fittp = AIPSTask('FITTP')
-	fittp.indata = AIPSUVData('MFSC_SN','TASAV',indisk,1)
-	fittp.indisk = indisk
-	fittp.dataout = 'PWD:MFSC_corr_' + str(itercal) + 'iter_' +str(soli)+ 'sol.TASAV'
-	fittp.go()
-
-	AIPSUVData('MFSC_SN','TASAV',indisk,1).zap()
-	for i in range(1,itercal+1):
-		uvdata.zap_table('CL',i+1)
-		uvdata.zap_table('SN',i)
-	if combinIFLLRR == 1:
-		for i in range(1,int(itercal*(math.ceil((noteles*16)/9.0)))+1):
-			uvdata.zap_table('PL',i)
-	if combinIFLLRR == 2:
-		for i in range(1,int(itercal*(math.ceil((noteles*2)/9.0)))+1):
-			uvdata.zap_table('PL',i)
-	if combinIFLLRR == 3:
-		for i in range(1,int(itercal*(math.ceil((noteles*8)/9.0)))+1):
-			uvdata.zap_table('PL',i)
-	if combinIFLLRR == 4:
-		for i in range(1,int(itercal*(math.ceil(noteles/9.0)))+1):
-			uvdata.zap_table('PL',i)
-'''
-''' # Nugget of gold to shift offsetts to field centres...
-uvdata = AIPSUVData(uvname[i],'WTMOD',2,1) #shift data to centre.
-centreRADEC = degreeradecconvert(uvdata.header['crval'][4],uvdata.header['crval'][5])
-offsetRADEC = runoffsetradec(uvname[i])
-offset = radecconvert(centreRADEC[0],centreRADEC[1],offsetRADEC[0],offsetRADEC[1])
-uvfix = AIPSTask('UVFIX')
-uvfix.indata = uvdata
-uvfix.outdisk = indisk
-uvfix.shift[1:] = offset[0],offset[1]
-uvfix.go()
-uvdata = AIPSUVData(uvname[i],'UVFIX',2,1)
-print offset, ofsetRADEC, centreRADEC
-'''

@@ -2,6 +2,7 @@ import re
 import sys
 import traceback
 import logging
+import math
 
 def setup_logging_to_file(filename):
     logging.basicConfig( filename='./'+filename,
