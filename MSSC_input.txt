@@ -7,8 +7,11 @@ do_load     = True      # Load the data and create single 1Jy data for self-cal
 do_self_cal = False       # Do the self cal iterations
 use_DBAPP   = False      # Use DBAPP to concat (quicker but often doesn't work)
 
-### File locations
-UV_path = './UV/'
+### File locations & loading options
+apply_pbcor = False  ## To be used in conjunction with run_pbcor (EVN only)
+pbcor_path = ''     ## path to tasav files for PBCOR (EVN only)
+do_calib = True     ## Apply calibration & split data
+UV_path = './UV/ms/'
 UV_files =
 UV_suffix = .fits
 
@@ -17,21 +20,26 @@ AIPS_userno = 1004		# An AIPS user number with an empty catalogue!
 AIPS_indisk = 1		# AIPS disk to use
 AIPS_msgkill = 0		# How chatty dya want AIPS to be, -5 is quiet 5 is loud
 
-### MSSC
+### MSSC Setup
 pointing_centre = -170.791333333, 62.216111111   #Pointing centre in deg
-reference_antenna = 3                     #reference antenna used in phase referencing
-solution_interval = 2           #self cal solution interval
-combineIFLLRR = 4               # 1 for no combination, 2 to combine IF, 3 to combine pols, 4 to combine all
-amplitude_or_phase = 'P'        # 'P' for phase only calibration (Combined SNR<200), A&P for gain and phase
-
-imsize = 1024                   #Image size in pixels. Recommended to be >=512 e.g. 1024 or 2048
-self_cal_iter = 5               #Number of self_cal iterations
-file_start = 'HDF'		#Beginning of the UV data files (should be the same for all data)
-file_end = '.UV'                #End of the UV data files(should be same for all UV data
-niter = 250                     #Clean iterations
 noteles = 12                    #Number of telescopes
+reference_antenna = 3           #reference antenna used in phase referencing
 
+### UV stacking
+imsize = 1024                   #Image size in pixels.
+niter = 25                    #Clean iterations
 
+## Self calibration
+solution_interval = 2           #self cal solution interval(s)
 
-#Need to run this with doload =1 first and doscal = 1. If the SN tables are not good and parameters need to be changed change doload = 0
+combineIFLLRR = 4               #data combination options (see below)
+# Options: 1 no combination,  2 to combine IFs
+#          3 to combine pols, 4 to combine all
+
+amplitude_or_phase = 'P'        # 'P' phase only calibration, A&P amp and phase
+self_cal_iter = 5               #Number of self_cal iterations
+
+##########
+# Need to run this with doload =1 first and doscal = 1.
+# If the SN tables are not good and parameters need to be changed change doload = False
 # so the set need not be loaded again! (this takes ages)
