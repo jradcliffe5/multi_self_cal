@@ -157,9 +157,7 @@ if do_load == 'True':
 			tacop.go()
 			clcal = AIPSTask('CLCAL')
 			clcal.indata = uvdata
-				clcal.interpol = 'AMBG'
-			else:
-				clcal.interpol = 'SELN'
+			clcal.interpol = 'SELN'
 			clcal.opcode = 'CALP'
 			clcal.snver = 1
 			clcal.invers = 1
