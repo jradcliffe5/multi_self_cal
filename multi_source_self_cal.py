@@ -111,6 +111,8 @@ if do_load == 'True':
 	uvname = [] #HDF names of files
 
 	for i in range(len(UV_files)):
+		total_progress = len(UV_files) + 5
+		total = i
 		os.system('rsync -ar --progress %s%s ./' % (UV_path,UV_files[i]))
 		fitld = AIPSTask('FITLD')
 		fitld.datain = 'PWD:%s' % UV_files[i]
@@ -126,8 +128,41 @@ if do_load == 'True':
 
 		uvdata = AIPSUVData('A%s' % i,'LOAD',indisk,1)
 
+		if apply_pbcor == 'True':
+			pbcor_file = '%s_PBCOR_TASAV.fits' % UV_files[i][0:8]
+			os.system('rsync -ar --progress %s%s ./' % (pbcor_path,pbcor_file))
+			fitld = AIPSTask('FITLD')
+			fitld.datain = 'PWD:%s' % pbcor_file
+			fitld.outname = 'PBCOR'
+			fitld.outclass = 'TASAV'
+			fitld.go()
+			tasavfile = AIPSUVData('PBCOR','TASAV',1,1)
+			tacop = AIPSTask('TACOP')
+			tacop.indata = tasavfile
+			tacop.outdata = uvdata
+			tacop.inext = 'SN'
+			tacop.invers = 1
+			tacop.ncount = 1
+			tacop.go()
+			clcal = AIPSTask('CLCAL')
+			clcal.indata = uvdata
+			clcal.opcode = 'CALP'
+			clcal.interpol = 'SELN'
+			clcal.snver = 1
+			clcal.invers = 1
+			clcal.go()
+			tasavfile.zap()
+
 		if do_calib == 'True':
-			splat = AIPSTask('')
+			splat = AIPSTask('SPLAT')
+			splat.indata = uvdata
+			splat.docalib = 2
+			splat.aparm[7] = 1
+			splat.outname = uvdata.name
+			splat.outclass = 'SPLAT'
+			splat.go()
+			uvdata.zap()
+			uvdata = AIPSUVData(uvdata.name,'SPLAT',indisk,1)
 
 		#imagedata = AIPSImage(uvname[i],'IIM001',indisk,1)
 
@@ -172,6 +207,7 @@ if do_load == 'True':
 		uvdata.rename(name='COMBO',klass='UV', seq=0)
 
 		os.system('rm %s' % UV_files[i])
+		update_progress(total/total_progress)
 	if use_DBAPP == 'True':
 		dbapp = AIPSTask('DBAPP')
 		uvdata = WizAIPSUVData('COMBO','UV',indisk,1)
@@ -189,6 +225,8 @@ if do_load == 'True':
 		uvdata = WizAIPSUVData('COMBO','DBCON',1,1)
 	else:
 		print ''
+	total = total+1
+	update_progress(total/total_progress)
 
 	uvsrt = AIPSTask('UVSRT')
 	uvsrt.sort = 'TB'
@@ -196,6 +234,8 @@ if do_load == 'True':
 	uvsrt.outdata = uvdata
 	uvsrt.outdisk = indisk
 	uvsrt.go()
+	total = total+1
+	update_progress(total/total_progress)
 
 	uvdata.zap_table('CL',1)
 	indxr = AIPSTask('INDXR')
@@ -204,6 +244,8 @@ if do_load == 'True':
 	indxr.cparm[2] = 360
 	indxr.cparm[3] = 0.25
 	indxr.go()
+	total = total+1
+	update_progress(total/total_progress)
 
 	multi = AIPSTask('MULTI')
 	multi.indata = uvdata
@@ -211,6 +253,8 @@ if do_load == 'True':
 	multi.outname = 'POINT'
 	multi.outclass = 'UVDATA'
 	multi.go()
+	total = total+1
+	update_progress(total/total_progress)
 
 	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
 
@@ -223,6 +267,8 @@ if do_load == 'True':
 	tabed.aparm[1:] = 2, 0, 0, 3, 0
 	tabed.keystrng = 'POINT'
 	tabed.go()
+	total = total+1
+	update_progress(total/total_progress)
 
 if do_self_cal == 'True':
 	uvdata = AIPSUVData('POINT','UVDATA',indisk,1)
