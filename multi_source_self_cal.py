@@ -92,6 +92,7 @@ refant = int(inputs['reference_antenna']) #reference antenna used in phase refer
 imsize = int(inputs['imsize'])   #Image size in pixels.
 print imsize
 niter = int(inputs['niter'])                    #Clean iterations
+itercal = int(inputs['self_cal_iter'])
 
 
 pointcenRA, pointcenDEC = str(inputs['pointing_centre']).split(',')
