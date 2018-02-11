@@ -323,7 +323,7 @@ if do_self_cal == 'True':
 			calib.in2disk = indisk
 			calib.ncomp[1] = -1000000
 			calib.nmaps = 1
-		calib.refant = refan
+		calib.refant = refant
 		calib.solint = soli
 		if combinIFLLRR == 1:
 			calib.aparm[1:] = 3, 0, 0, 0, 0, 0, 0, 0
@@ -362,7 +362,7 @@ if do_self_cal == 'True':
 		clcal.invers = i
 		clcal.gainver = i
 		clcal.gainuse = i+1
-		clcal.refant = refan
+		clcal.refant = refant
 		clcal.go()
 
 	lwpla = AIPSTask('LWPLA')
