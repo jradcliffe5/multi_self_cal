@@ -32,6 +32,7 @@ import string
 from MSSC_functions import *
 import platform
 import logging
+from collections import deque
 
 ### Setup logger
 log_name = "%s.log" % os.path.basename(__file__).split('.py')[0]

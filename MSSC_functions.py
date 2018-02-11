@@ -7,6 +7,7 @@ from AIPS import AIPS, AIPSDisk
 from AIPSTask import AIPSTask, AIPSList
 from AIPSData import AIPSUVData, AIPSImage, AIPSCat
 from Wizardry.AIPSData import AIPSUVData as WizAIPSUVData
+from collections import deque
 
 def update_progress(progress):
     barLength = 10 # Modify this to change the length of the progress bar
