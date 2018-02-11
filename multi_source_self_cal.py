@@ -93,6 +93,9 @@ imsize = int(inputs['imsize'])   #Image size in pixels.
 print imsize
 niter = int(inputs['niter'])                    #Clean iterations
 itercal = int(inputs['self_cal_iter'])
+soli = float(inputs['solution_interval'])
+combinIFLLRR = int(inputs['combineIFLLRR'])
+APhas = str(inputs['amplitude_or_phase'])
 
 
 pointcenRA, pointcenDEC = str(inputs['pointing_centre']).split(',')
