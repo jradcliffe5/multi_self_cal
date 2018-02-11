@@ -170,6 +170,7 @@ if do_load == 'True':
 			clcal.invers = 1
 			clcal.go()
 			tasavfile.zap()
+			os.system('rm %s' % (pbcor_file))
 
 		if do_calib == 'True':
 			splat = AIPSTask('SPLAT')
@@ -258,7 +259,7 @@ if do_load == 'True':
 	uvdata.zap_table('CL',1)
 	indxr = AIPSTask('INDXR')
 	indxr.indata = uvdata
-	indxr.cparm[1]=360
+	indxr.cparm[1]= 360
 	indxr.cparm[2] = 360
 	indxr.cparm[3] = 0.25
 	indxr.go()
