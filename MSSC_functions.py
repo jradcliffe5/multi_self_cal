@@ -320,7 +320,7 @@ def dbcon_combine(indisk):
 		dbcon.in2data = uvdata2
 		dbcon.outname = format(i)
 		dbcon.outclass = 'DBCON'
-		dbcon.outdisk = disk
+		dbcon.outdisk = indisk
 		dbcon.doarray = 1
 		dbcon.fqcenter = -1
 		dbcon.go()
