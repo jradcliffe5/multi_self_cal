@@ -137,6 +137,16 @@ if do_load == 'True':
 			fitld.outname = 'PBCOR'
 			fitld.outclass = 'TASAV'
 			fitld.go()
+			if single_source_file == 'True':
+				multi = AIPSTask('MULTI')
+				multi.indata = uvdata
+				multi.aparm[1] = 0.25
+				uvdata2 = AIPSUVData(uvdata.name,'MULTI',1,1)
+				indxr = AIPSTask('INDXR')
+				indxr.indata = uvdata2
+				indxr.go()
+				uvdata.zap()
+				uvdata2.rename('A%s' % i,'LOAD',indisk,1)
 			tasavfile = AIPSUVData('PBCOR','TASAV',1,1)
 			tacop = AIPSTask('TACOP')
 			tacop.indata = tasavfile
@@ -147,7 +157,6 @@ if do_load == 'True':
 			tacop.go()
 			clcal = AIPSTask('CLCAL')
 			clcal.indata = uvdata
-			if single_source_file == 'True':
 				clcal.interpol = 'AMBG'
 			else:
 				clcal.interpol = 'SELN'
