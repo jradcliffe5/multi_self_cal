@@ -141,6 +141,7 @@ if do_load == 'True':
 				multi = AIPSTask('MULTI')
 				multi.indata = uvdata
 				multi.aparm[1] = 0.25
+				multi.go()
 				uvdata2 = AIPSUVData(uvdata.name,'MULTI',1,1)
 				indxr = AIPSTask('INDXR')
 				indxr.indata = uvdata2
