@@ -94,7 +94,8 @@ niter = int(inputs['niter'])                    #Clean iterations
 
 
 pointcenRA, pointcenDEC = str(inputs['pointing_centre']).split(',')
-
+pointcenRA = float(pointcenRA)
+pointcenDEC = float(pointcenDEC)
 
 AIPSCat().zap()
 
