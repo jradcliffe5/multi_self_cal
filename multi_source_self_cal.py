@@ -147,7 +147,7 @@ if do_load == 'True':
 				indxr.indata = uvdata2
 				indxr.go()
 				uvdata.zap()
-				uvdata2.rename('A%s' % i,'LOAD',indisk,1)
+				uvdata2.rename(name='A%s' % i,klass='LOAD', seq=0)
 			tasavfile = AIPSUVData('PBCOR','TASAV',1,1)
 			tacop = AIPSTask('TACOP')
 			tacop.indata = tasavfile
