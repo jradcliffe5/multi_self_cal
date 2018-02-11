@@ -282,7 +282,7 @@ def radecconvert(a,b,c,d):
 
     return [deltara, deltadec]
 
-def dbcon_combine(disk):
+def dbcon_combine(indisk):
 	tasav = AIPSTask('TASAV')
 	uvavg = AIPSTask('UVAVG')
 	avspc = AIPSTask('AVSPC')
