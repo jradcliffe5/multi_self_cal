@@ -8,6 +8,7 @@ do_self_cal = False       # Do the self cal iterations
 use_DBAPP   = False      # Use DBAPP to concat (quicker but often doesn't work)
 
 ### File locations & loading options
+single_source_file = True
 apply_pbcor = True  ## To be used in conjunction with run_pbcor (EVN only)
 pbcor_path = ../test_PBCOR/     ## path to tasav files for PBCOR (EVN only)
 do_calib = True     ## Apply calibration & split data

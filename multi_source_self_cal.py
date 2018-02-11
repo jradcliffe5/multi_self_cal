@@ -72,6 +72,7 @@ do_load   = str(inputs['do_load'])
 do_self_cal = str(inputs['do_self_cal'])
 use_DBAPP = str(inputs['use_DBAPP'])
 ### File locations
+single_source_file = str(inputs['single_source_file'])
 UV_path = str(inputs['UV_path'])
 UV_files = str(inputs['UV_files'])
 UV_suffix = str(inputs['UV_suffix'])
@@ -146,8 +147,11 @@ if do_load == 'True':
 			tacop.go()
 			clcal = AIPSTask('CLCAL')
 			clcal.indata = uvdata
+			if single_source_file == 'True':
+				clcal.interpol = 'AMBG'
+			else:
+				clcal.interpol = 'SELN'
 			clcal.opcode = 'CALP'
-			clcal.interpol = 'SELN'
 			clcal.snver = 1
 			clcal.invers = 1
 			clcal.go()
