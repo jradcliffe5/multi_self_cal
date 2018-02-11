@@ -8,12 +8,12 @@ do_self_cal = False       # Do the self cal iterations
 use_DBAPP   = False      # Use DBAPP to concat (quicker but often doesn't work)
 
 ### File locations & loading options
-apply_pbcor = False  ## To be used in conjunction with run_pbcor (EVN only)
-pbcor_path = ''     ## path to tasav files for PBCOR (EVN only)
+apply_pbcor = True  ## To be used in conjunction with run_pbcor (EVN only)
+pbcor_path = ../test_PBCOR/     ## path to tasav files for PBCOR (EVN only)
 do_calib = True     ## Apply calibration & split data
-UV_path = './UV/ms/'
-UV_files =
-UV_suffix = .fits
+UV_path = ../test_UV/
+UV_files = HDFC0214.UV, HDFC0262.UV
+UV_suffix = .UV
 
 ### AIPS Specific
 AIPS_userno = 1004		# An AIPS user number with an empty catalogue!
