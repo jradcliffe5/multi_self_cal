@@ -98,9 +98,9 @@ pointcenRA, pointcenDEC = str(inputs['pointing_centre']).split(',')
 pointcenRA = float(pointcenRA)
 pointcenDEC = float(pointcenDEC)
 
-AIPSCat().zap()
 
 if do_load == 'True':
+	AIPSCat().zap()
 	logging.info('Loading data into AIPS')
 	print('Loading data into AIPS')
 
