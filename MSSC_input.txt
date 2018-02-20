@@ -1,29 +1,46 @@
 # Inputs for the multi phase centre calibration
-# The UV data for calibration needs to be in the same directory as this file and multi_source_self_cal.py
-# Usage ParselTongue multi_source_self_cal.py input.txt
-userno = 1004		# An AIPS user number with an empty catalogue! CHECK IT IS EMPTY FIRST!!
-filenam = 10            # Number of characters in filename (Don’t change! Needs to be fixed but should work ok!)
-indisk = 1		# AIPS disk to use
-msgkill = 0		# How chatty dya want AIPS to be, -5 is quiet 5 is loud
+## The UV data for calibration needs to be in the same directory as this file and multi_source_self_cal.py
+### Usage ParselTongue multi_source_self_cal.py MSSC_input.txt
 
-point_cen_RA = -170.791333333   #RA pointing centre of observations in decimal degrees
-point_cen_DEC = 62.216111111    #DEC pointing centre
-ref_ant = 3                     #reference antenna used in phase referencing
-solution_interval = 2           #self cal solution interval
-combineIFLLRR = 4               # 1 for no combination, 2 to combine IF, 3 to combine pols, 4 to combine all
-amplitude_or_phase = 'P'        # 'P' for phase only calibration (Combined SNR<200), A&P for gain and phase
+### Running options
+do_load     = True      # Load the data and create single 1Jy data for self-cal
+do_self_cal = False       # Do the self cal iterations
+use_DBAPP   = False      # Use DBAPP to concat (quicker but often doesn't work)
 
-imsize = 1024                   #Image size in pixels. Recommended to be >=512 e.g. 1024 or 2048
-self_cal_iter = 5               #Number of self_cal iterations
-file_start = 'HDF'		#Beginning of the UV data files (should be the same for all data)
-file_end = '.UV'                #End of the UV data files(should be same for all UV data
-niter = 250                     #Clean iterations
+### File locations & loading options
+single_source_file = True
+apply_pbcor = True  ## To be used in conjunction with run_pbcor (EVN only)
+pbcor_path = /data/users/radcliff/EG078E/PBCOR/TASAV/     ## path to tasav files for PBCOR (EVN only)
+do_calib = True     ## Apply calibration & split data
+UV_path = ~/nas/radcliff/EG078E/phase_referencing/UV/
+UV_files = HDFC0033.UV, HDFC0068.UV, HDFC0095.UV, HDFC0262.UV, HDFC0246.UV, HDFC0277.UV, HDFC0153.UV,HDFC0214.UV, HDFC0262.UV, HDFC0155.UV, HDFC0161.UV, HDFC0269.UV
+UV_suffix = .UV
+
+### AIPS Specific
+AIPS_userno = 1004		# An AIPS user number with an empty catalogue!
+AIPS_indisk = 1		# AIPS disk to use
+AIPS_msgkill = 0		# How chatty dya want AIPS to be, -5 is quiet 5 is loud
+
+### MSSC Setup
+pointing_centre = -170.791333333, 62.216111111   #Pointing centre in deg
 noteles = 12                    #Number of telescopes
+reference_antenna = 3           #reference antenna used in phase referencing
 
-# Mode options
-doload = 0                      #Load the data and create single 1Jy data set ready for self-cal
-doscal = 1                      #Do the self cal iterations
-dbcon_choice = 1
+### UV stacking
+imsize = 1024                   #Image size in pixels.
+niter = 500                    #Clean iterations
 
-#Need to run this with doload =1 first and doscal = 1. If the SN tables are not good and parameters need to be changed change doload = 0
+## Self calibration
+solution_interval = 2           #self cal solution interval(s)
+
+combineIFLLRR = 4               #data combination options (see below)
+# Options: 1 no combination,  2 to combine IFs
+#          3 to combine pols, 4 to combine all
+
+amplitude_or_phase = 'P'        # 'P' phase only calibration, A&P amp and phase
+self_cal_iter = 5               #Number of self_cal iterations
+
+##########
+# Need to run this with doload =1 first and doscal = 1.
+# If the SN tables are not good and parameters need to be changed change doload = False
 # so the set need not be loaded again! (this takes ages)
