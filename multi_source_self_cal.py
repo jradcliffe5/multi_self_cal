@@ -337,9 +337,10 @@ if do_self_cal == 'True':
 			calib.aparm[1:] = 3, 0, 1, 0, 0, 0, 0, 0
 		if combinIFLLRR == 4:
 			calib.aparm[1:] = 3, 0, 1, 0, 1, 0, 0, 0
-		calib.soltype = 'L1'
+		calib.soltype = 'L1R'
 		calib.solmode = APhas
 		calib.snver = i
+                calib.aparm[7] = 3
 		calib.go()
 
 		snplt.indata = uvdata
